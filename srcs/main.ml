@@ -6,51 +6,9 @@
 (*   By: jaguillo <jaguillo@student.42.fr>          +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2017/05/16 17:23:44 by jaguillo          #+#    #+#             *)
-(*   Updated: 2017/06/10 00:35:24 by juloo            ###   ########.fr       *)
+(*   Updated: 2017/06/10 19:00:54 by juloo            ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
-
-module Time =
-struct
-
-	type t = int * int * int
-
-	let now () =
-		let now = new%js Js.date_now in
-		Lwt.return (now##getHours, now##getMinutes, now##getSeconds)
-
-	let next_sec () =
-		let now = new%js Js.date_now in
-		let t = float_of_int (1000 - now##getMilliseconds + 1) /. 1000. in
-		Lwt_js.sleep t |> Lwt.map (fun () ->
-			(now##getHours, now##getMinutes, now##getSeconds)
-		)
-
-	let to_string (h, m, s) = Printf.sprintf "%d:%02d:%02d" h m s
-
-end
-
-module WeatherData =
-struct
-
-	type t = int * int
-
-	let dummy = -5, 72
-
-	let temp (t, _) = t
-	let wind (_, w) = w
-
-end
-
-module WeatherDataLoader =
-struct
-
-	type cached = Uptodate of WeatherData.t | Outdated of WeatherData.t | Nodata
-
-	(* val get_cached : unit -> cached Lwt.t *)
-	(* val load : unit -> WeatherData.t Lwt.t *)
-
-end
 
 type 'a loop = 'a -> [ `Loop of 'a * 'a loop Lwt.t list ]
 
@@ -74,6 +32,13 @@ let (<|) f f' x = f (f' x)
 
 let (%) = Printf.sprintf
 
+let sub_update f f' =
+	let rec update loop t =
+		let `Loop (sub, tasks) = loop @@ f t in
+		`Loop (f' t sub, map_tasks tasks)
+	and map_tasks tasks = List.map (Lwt.map update) tasks in
+	update, map_tasks
+
 module WeatherComp =
 struct
 
@@ -82,26 +47,31 @@ struct
 		time		: TimeComp.t
 	}
 
-	let rec time_comp_update (`Loop (time, tasks)) t = `Loop ({ t with time }, time_comp_tasks tasks)
-	and time_comp_tasks lst = List.map (Lwt.map (fun f t -> time_comp_update (f t.time) t)) lst
+	let _data t = t.data
+	let _time t = t.time
+	let _with_time t time = { t with time }
+
+	let time_comp_update, time_comp_tasks = sub_update _time _with_time
 
 	let create data time =
 		let time, tasks = TimeComp.create time in
 		{ data; time }, time_comp_tasks tasks
 
-	let _data t = t.data
-	let _time t = t.time
+	let set_data data t = `Loop ({ t with data }, [])
 
 	let view : (t, t loop) Component.tmpl' = Component.T.(
 			e' "div" [
-				comp TimeComp.view (fun _ time -> time) _time
-					(fun _ time t -> time_comp_update (time t.time) t);
+				comp
+					TimeComp.view
+					(fun _ time -> time)
+					_time
+					(fun _ -> time_comp_update);
 				e "div" [
 					e "div" [
-						text ((%) "%d°C" <| WeatherData.temp <| _data)
+						text (fun t -> (%) "%d°C" t.data.current.temperature)
 					];
 					e "div" [
-						text ((%) "%d km/h" <| WeatherData.wind <| _data)
+						text (fun t -> (%) "%d km/h" t.data.current.wind_speed)
 					]
 				]
 			]
@@ -113,12 +83,17 @@ let () =
 	Lwt.async (fun () ->
 		let%lwt _ = Lwt_js_events.onload () in
 		let root = Component.create_root Dom_html.document##.body None in
+		let run t = Component.run root t WeatherComp.view (fun t e -> e t) in
 		let%lwt time = Time.now () in
-		let data = WeatherData.dummy in
-		Component.run
-			root
-			(WeatherComp.create data time)
-			WeatherComp.view
-			(fun t e -> e t)
+		WeatherDataLoader.(match%lwt get_cached () with
+		| Uptodate data	-> run (WeatherComp.create data time)
+		| Outdated data		->
+			let refresh_data =
+				Lwt.map WeatherComp.set_data (load ())
+			in
+			let t, tasks = WeatherComp.create data time in
+			run (t, refresh_data :: tasks)
+		| Nodata			->
+			let%lwt data = load () in
+			run (WeatherComp.create data time))
 	)
-
