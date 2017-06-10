@@ -7,7 +7,7 @@
 #    By: jaguillo <jaguillo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/03/14 15:22:32 by jaguillo          #+#    #+#              #
-#    Updated: 2017/05/16 17:25:07 by jaguillo         ###   ########.fr        #
+#    Updated: 2017/05/16 17:27:32 by jaguillo         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -69,5 +69,5 @@ PACKAGE_OPTS="-ppxopt lwt.ppx,-no-debug"
 
 {
 	mk_res_depend "statics"
-	mk_ocaml_depend "srcs" "-package `echo $PACKAGES | tr ' ' ','` $PACKAGE_OPTS"
+	mk_ocaml_depend "srcs Component" "-package `echo $PACKAGES | tr ' ' ','` $PACKAGE_OPTS"
 } > "$DEPEND_FILE"

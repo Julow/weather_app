@@ -1,0 +1,3 @@
+[submodule "Component"]
+	path = Component
+	url = https://github.com/Julow/Component.git
