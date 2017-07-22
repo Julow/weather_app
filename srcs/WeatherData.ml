@@ -6,7 +6,7 @@
 (*   By: juloo <juloo@student.42.fr>                +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2017/06/10 14:03:17 by juloo             #+#    #+#             *)
-(*   Updated: 2017/06/10 19:02:22 by juloo            ###   ########.fr       *)
+(*   Updated: 2017/07/23 00:18:08 by juloo            ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
@@ -49,19 +49,19 @@ struct
 
 	let of_object o =
 		{
-			timestamp		= Js.parseInt o##.local_epoch;
-			location		= location_of_object o##.display_location;
+			timestamp		= Js.parseInt o##.local_epoch_;
+			location		= location_of_object o##.display_location_;
 			weather_string	= Js.to_string o##.weather;
-			temperature		= Js.parseInt o##.temp_c;
-			humidity		= Js.parseInt o##.relative_humidity;
-			wind_dir		= Js.parseInt o##.wind_degrees;
-			wind_speed		= Js.parseInt o##.wind_kph;
-			wind_gust		= Js.parseInt o##.wind_gust_kph;
-			pressure		= Js.parseInt o##.pressure_mb;
-			pressure_trend	= Js.parseInt o##.pressure_trend;
-			dewpoint		= Js.parseInt o##.dewpoint_c;
-			feelslike		= Js.parseInt o##.feelslike_c;
-			visibility		= Js.parseFloat o##.visibility_km;
+			temperature		= Js.parseInt o##.temp_c_;
+			humidity		= Js.parseInt o##.relative_humidity_;
+			wind_dir		= Js.parseInt o##.wind_degrees_;
+			wind_speed		= Js.parseInt o##.wind_kph_;
+			wind_gust		= Js.parseInt o##.wind_gust_kph_;
+			pressure		= Js.parseInt o##.pressure_mb_;
+			pressure_trend	= Js.parseInt o##.pressure_trend_;
+			dewpoint		= Js.parseInt o##.dewpoint_c_;
+			feelslike		= Js.parseInt o##.feelslike_c_;
+			visibility		= Js.parseFloat o##.visibility_km_;
 			condition		= Js.to_string o##.icon
 		}
 
@@ -96,7 +96,7 @@ struct
 			feelslike	= Js.parseInt o##.feelslike##.metric;
 			pop			= Js.parseInt o##.pop;
 			snow		= Js.parseInt o##.snow##.metric;
-			pressure	= Js.parseInt o##.mslp##.metri
+			pressure	= Js.parseInt o##.mslp##.metric
 		}
 
 end
@@ -139,8 +139,8 @@ let of_object o =
 		}
 	in
 	{
-		current	= Current.of_object o##.current_observation;
-		hourly	= Array.map Hourly.of_object (Js.to_array o##.hourly_forecast);
-		moon	= moon_phase_of_object o##.moon_phase;
-		sun		= sun_phase_of_object o##.sun_phase
+		current	= Current.of_object o##.current_observation_;
+		hourly	= Array.map Hourly.of_object (Js.to_array o##.hourly_forecast_);
+		moon	= moon_phase_of_object o##.moon_phase_;
+		sun		= sun_phase_of_object o##.sun_phase_
 	}

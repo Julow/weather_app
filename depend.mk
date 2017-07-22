@@ -10,7 +10,9 @@ OCAML_OBJS = \
 	$(OBJS_DIR)/srcs/utils/LocalStorage.cmo \
 	$(OBJS_DIR)/Component/Component.cmi \
 	$(OBJS_DIR)/Component/Component.cmo \
+	$(OBJS_DIR)/Component/Component_Html.cmi \
 	$(OBJS_DIR)/srcs/WeatherDataLoader.cmo \
+	$(OBJS_DIR)/Component/Component_Html.cmo \
 	$(OBJS_DIR)/srcs/main.cmo
 OCAML_OBJ_TREE = $(OBJS_DIR)/srcs/utils $(OBJS_DIR)/srcs $(OBJS_DIR)/Component
 
@@ -22,10 +24,13 @@ $(OBJS_DIR)/srcs/WeatherDataLoader.cmo : $(OBJS_DIR)/srcs/WeatherData.cmo $(OBJS
 $(OBJS_DIR)/srcs/WeatherDataLoader.cmx : $(OBJS_DIR)/srcs/WeatherData.cmx $(OBJS_DIR)/srcs/utils/LocalStorage.cmx
 $(OBJS_DIR)/srcs/WeatherData.cmo :
 $(OBJS_DIR)/srcs/WeatherData.cmx :
-$(OBJS_DIR)/srcs/main.cmo : $(OBJS_DIR)/srcs/WeatherDataLoader.cmo $(OBJS_DIR)/srcs/WeatherData.cmo $(OBJS_DIR)/srcs/Time.cmo $(OBJS_DIR)/Component/Component.cmi
-$(OBJS_DIR)/srcs/main.cmx : $(OBJS_DIR)/srcs/WeatherDataLoader.cmx $(OBJS_DIR)/srcs/WeatherData.cmx $(OBJS_DIR)/srcs/Time.cmx $(OBJS_DIR)/Component/Component.cmx
+$(OBJS_DIR)/srcs/main.cmo : $(OBJS_DIR)/srcs/WeatherDataLoader.cmo $(OBJS_DIR)/srcs/WeatherData.cmo $(OBJS_DIR)/srcs/Time.cmo $(OBJS_DIR)/Component/Component_Html.cmi $(OBJS_DIR)/Component/Component.cmi
+$(OBJS_DIR)/srcs/main.cmx : $(OBJS_DIR)/srcs/WeatherDataLoader.cmx $(OBJS_DIR)/srcs/WeatherData.cmx $(OBJS_DIR)/srcs/Time.cmx $(OBJS_DIR)/Component/Component_Html.cmx $(OBJS_DIR)/Component/Component.cmx
 $(OBJS_DIR)/srcs/utils/LocalStorage.cmo :
 $(OBJS_DIR)/srcs/utils/LocalStorage.cmx :
+$(OBJS_DIR)/Component/Component_Html.cmi : $(OBJS_DIR)/Component/Component.cmi
+$(OBJS_DIR)/Component/Component_Html.cmo : $(OBJS_DIR)/Component/Component.cmi $(OBJS_DIR)/Component/Component_Html.cmi
+$(OBJS_DIR)/Component/Component_Html.cmx : $(OBJS_DIR)/Component/Component.cmx $(OBJS_DIR)/Component/Component_Html.cmi
 $(OBJS_DIR)/Component/Component.cmo : $(OBJS_DIR)/Component/Component.cmi
 $(OBJS_DIR)/Component/Component.cmx : $(OBJS_DIR)/Component/Component.cmi
 $(OBJS_DIR)/Component/Component.cmi :
