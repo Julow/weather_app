@@ -6,39 +6,47 @@
 (*   By: jaguillo <jaguillo@student.42.fr>          +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2017/05/16 17:23:44 by jaguillo          #+#    #+#             *)
-(*   Updated: 2017/07/23 00:20:35 by juloo            ###   ########.fr       *)
+(*   Updated: 2017/10/08 20:29:04 by juloo            ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
-type 'a loop = 'a -> [ `Loop of 'a * 'a loop Lwt.t list ]
+open Component
 
 module TimeComp =
 struct
 
 	type t = Time.t
 
-	let rec update_clock time t = `Loop (time, [next_sec ()])
-	and next_sec () = Time.next_sec () |> Lwt.map update_clock
+	let rec update_clock time _ = time, [next_sec]
+	and next_sec = Task (fun () -> Time.next_sec () |> Lwt.map update_clock)
 
-	let create time = time, [next_sec ()]
+	let create time = time, [next_sec]
 
-	let view : (t, t loop) Component_Html.tmpl =
+	let view =
 		Component_Html.(
 			e "div" [] [ text Time.to_string ]
 		)
 
 end
 
+let (~>) x _ = x
+let (~~>) x _ _ = x
+
 let (<|) f f' x = f (f' x)
 
 let (%) = Printf.sprintf
 
-let sub_update f f' =
-	let rec update loop t =
-		let `Loop (sub, tasks) = loop @@ f t in
-		`Loop (f' t sub, map_tasks tasks)
-	and map_tasks tasks = List.map (Lwt.map update) tasks in
-	update, map_tasks
+let map_comp controler =
+	let rec map_comp comp data =
+		let data, tasks = comp data in
+		data, List.map map_task tasks
+	and map_controler comp data =
+		controler (map_comp comp) data
+	and map_task (Task t) =
+		let t () = Lwt.map map_controler (t ()) in
+		Task t
+	in
+	map_controler, List.map map_task
 
 module WeatherComp =
 struct
@@ -48,20 +56,20 @@ struct
 		time		: TimeComp.t
 	}
 
-	let _time t = t.time
-	let _with_time t time = { t with time }
-
-	let time_comp_update, time_comp_tasks = sub_update _time _with_time
+	let time_comp, time_comp_tasks = map_comp (fun time_comp t ->
+			let time, tasks = time_comp t.time in
+			{ t with time }, tasks
+		)
 
 	let create data time =
 		let time, tasks = TimeComp.create time in
 		{ data; time }, time_comp_tasks tasks
 
-	let set_data data t = `Loop ({ t with data }, [])
+	let set_data data t = { t with data }, []
 
-	let view : (t, t loop) Component_Html.tmpl = Component_Html.(
+	let view = Component_Html.(
 			e "div" [] [
-				comp TimeComp.view _time time_comp_update;
+				comp TimeComp.view (fun t -> t.time) time_comp;
 				e "div" [] [
 					e "div" [] [
 						text (fun t -> "%d°C" % t.data.current.temperature)
@@ -81,15 +89,14 @@ let () =
 		let view = Component_Html.root WeatherComp.view Dom_html.document##.body in
 		let run t = Component.run t view (fun t e -> e t) in
 		let%lwt time = Time.now () in
-		WeatherDataLoader.(match%lwt get_cached () with
+		let open WeatherDataLoader in
+		match%lwt get_cached () with
 		| Uptodate data		-> run (WeatherComp.create data time)
 		| Outdated data		->
-			let refresh_data =
-				Lwt.map WeatherComp.set_data (load ())
-			in
+			let refresh_data () = Lwt.map WeatherComp.set_data (load ()) in
 			let t, tasks = WeatherComp.create data time in
-			run (t, refresh_data :: tasks)
+			run (t, Task refresh_data :: tasks)
 		| Nodata			->
 			let%lwt data = load () in
-			run (WeatherComp.create data time))
+			run (WeatherComp.create data time)
 	)
