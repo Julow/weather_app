@@ -6,100 +6,90 @@
 (*   By: juloo <juloo@student.42.fr>                +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2017/06/10 14:03:17 by juloo             #+#    #+#             *)
-(*   Updated: 2017/07/23 00:18:08 by juloo            ###   ########.fr       *)
+(*   Updated: 2017/11/07 00:42:11 by juloo            ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
-module Current =
-struct
+type location = {
+	city			: string;
+	state			: string;
+	lon				: float;
+	lat				: float;
+	elevation		: float
+}
 
-	type location = {
-		city			: string;
-		state			: string;
-		lon				: float;
-		lat				: float;
-		elevation		: float
+type current = {
+	timestamp		: int;
+	(* location		: location; *)
+	weather_string	: string;
+	temperature		: int; (* celcius *)
+	humidity		: int; (* percent *)
+	wind_dir		: int; (* degree *)
+	wind_speed		: int; (* km/h *)
+	wind_gust		: int; (* km/h *)
+	pressure		: int; (* hpa *)
+	pressure_trend	: int;
+	dewpoint		: int; (* celcius *)
+	feelslike		: int; (* celcius *)
+	(* visibility		: float; (* km *) *)
+	condition		: string
+}
+
+let location_of_object o =
+	{
+		city		= Js.to_string o##.city;
+		state		= Js.to_string o##.state;
+		lon			= Js.parseFloat o##.longitude;
+		lat			= Js.parseFloat o##.latitude;
+		elevation	= Js.parseFloat o##.elevation
 	}
 
-	type t = {
-		timestamp		: int;
-		location		: location;
-		weather_string	: string;
-		temperature		: int; (* celcius *)
-		humidity		: int; (* percent *)
-		wind_dir		: int; (* degree *)
-		wind_speed		: int; (* km/h *)
-		wind_gust		: int; (* km/h *)
-		pressure		: int; (* hpa *)
-		pressure_trend	: int;
-		dewpoint		: int; (* celcius *)
-		feelslike		: int; (* celcius *)
-		visibility		: float; (* km *)
-		condition		: string
+let current_of_object o =
+	{
+		timestamp		= Js.parseInt o##.local_epoch_;
+		(* location		= location_of_object o##.display_location_; *)
+		weather_string	= Js.to_string o##.weather;
+		temperature		= Js.parseInt o##.temp_c_;
+		humidity		= Js.parseInt o##.relative_humidity_;
+		wind_dir		= Js.parseInt o##.wind_degrees_;
+		wind_speed		= Js.parseInt o##.wind_kph_;
+		wind_gust		= Js.parseInt o##.wind_gust_kph_;
+		pressure		= Js.parseInt o##.pressure_mb_;
+		pressure_trend	= Js.parseInt o##.pressure_trend_;
+		dewpoint		= Js.parseInt o##.dewpoint_c_;
+		feelslike		= Js.parseInt o##.feelslike_c_;
+		(* visibility		= Js.parseFloat o##.visibility_km_; *)
+		condition		= Js.to_string o##.icon
 	}
 
-	let location_of_object o =
-		{
-			city		= Js.to_string o##.city;
-			state		= Js.to_string o##.state;
-			lon			= Js.parseFloat o##.longitude;
-			lat			= Js.parseFloat o##.latitude;
-			elevation	= Js.parseFloat o##.elevation
-		}
+type hourly = {
+	timestamp		: int;
+	temperature		: int; (* celcius *)
+	dewpoint		: int; (* celcius *)
+	condition		: string;
+	wind_speed		: int; (* km/h *)
+	wind_dir		: int; (* degree *)
+	humidity		: int; (* percent *)
+	feelslike		: int; (* celcius *)
+	pop				: int; (* percent *)
+	snow			: int;
+	pressure		: int (* hpa *)
+}
 
-	let of_object o =
-		{
-			timestamp		= Js.parseInt o##.local_epoch_;
-			location		= location_of_object o##.display_location_;
-			weather_string	= Js.to_string o##.weather;
-			temperature		= Js.parseInt o##.temp_c_;
-			humidity		= Js.parseInt o##.relative_humidity_;
-			wind_dir		= Js.parseInt o##.wind_degrees_;
-			wind_speed		= Js.parseInt o##.wind_kph_;
-			wind_gust		= Js.parseInt o##.wind_gust_kph_;
-			pressure		= Js.parseInt o##.pressure_mb_;
-			pressure_trend	= Js.parseInt o##.pressure_trend_;
-			dewpoint		= Js.parseInt o##.dewpoint_c_;
-			feelslike		= Js.parseInt o##.feelslike_c_;
-			visibility		= Js.parseFloat o##.visibility_km_;
-			condition		= Js.to_string o##.icon
-		}
-
-end
-
-module Hourly =
-struct
-
-	type t = {
-		timestamp		: int;
-		temperature		: int; (* celcius *)
-		dewpoint		: int; (* celcius *)
-		condition		: string;
-		wind_speed		: int; (* km/h *)
-		wind_dir		: int; (* degree *)
-		humidity		: int; (* percent *)
-		feelslike		: int; (* celcius *)
-		pop				: int; (* percent *)
-		snow			: int;
-		pressure		: int (* hpa *)
+let hourly_of_object o =
+	{
+		timestamp	= Js.parseInt o##._FCTTIME##.epoch;
+		temperature	= Js.parseInt o##.temp##.metric;
+		dewpoint	= Js.parseInt o##.dewpoint##.metric;
+		condition	= Js.to_string o##.icon;
+		wind_speed	= Js.parseInt o##.wspd##.metric;
+		wind_dir	= Js.parseInt o##.wdir##.degrees;
+		humidity	= Js.parseInt o##.humidity;
+		feelslike	= Js.parseInt o##.feelslike##.metric;
+		pop			= Js.parseInt o##.pop;
+		snow		= Js.parseInt o##.snow##.metric;
+		pressure	= Js.parseInt o##.mslp##.metric
 	}
-
-	let of_object o =
-		{
-			timestamp	= Js.parseInt o##._FCTTIME##.epoch;
-			temperature	= Js.parseInt o##.temp##.metric;
-			dewpoint	= Js.parseInt o##.dewpoint##.metric;
-			condition	= Js.to_string o##.icon;
-			wind_speed	= Js.parseInt o##.wspd##.metric;
-			wind_dir	= Js.parseInt o##.wdir##.degrees;
-			humidity	= Js.parseInt o##.humidity;
-			feelslike	= Js.parseInt o##.feelslike##.metric;
-			pop			= Js.parseInt o##.pop;
-			snow		= Js.parseInt o##.snow##.metric;
-			pressure	= Js.parseInt o##.mslp##.metric
-		}
-
-end
 
 type moon_phase = {
 	illuminated		: int; (* percent *)
@@ -115,8 +105,8 @@ type sun_phase = {
 }
 
 type t = {
-	current			: Current.t;
-	hourly			: Hourly.t array;
+	current			: current;
+	hourly			: hourly array;
 	moon			: moon_phase;
 	sun				: sun_phase
 }
@@ -139,8 +129,8 @@ let of_object o =
 		}
 	in
 	{
-		current	= Current.of_object o##.current_observation_;
-		hourly	= Array.map Hourly.of_object (Js.to_array o##.hourly_forecast_);
+		current	= current_of_object o##.current_observation_;
+		hourly	= Array.map hourly_of_object (Js.to_array o##.hourly_forecast_);
 		moon	= moon_phase_of_object o##.moon_phase_;
 		sun		= sun_phase_of_object o##.sun_phase_
 	}

@@ -7,7 +7,7 @@
 #    By: jaguillo <jaguillo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/03/14 15:22:32 by jaguillo          #+#    #+#              #
-#    Updated: 2017/05/16 17:27:32 by jaguillo         ###   ########.fr        #
+#    Updated: 2017/11/05 16:25:13 by juloo            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -64,7 +64,7 @@ function mk_ocaml_depend
 		| sed -E 's#([^: ]+\.cm[oxi])#$(OBJS_DIR)/\1#g'
 }
 
-PACKAGES=`echo js_of_ocaml{,.ppx} lwt{,.ppx}`
+PACKAGES=`echo js_of_ocaml{,-ppx,-lwt} lwt{,.ppx}`
 PACKAGE_OPTS="-ppxopt lwt.ppx,-no-debug"
 
 {

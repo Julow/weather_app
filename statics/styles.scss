@@ -1,0 +1,66 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   styles.scss                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: juloo </var/mail/juloo>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2017/11/07 22:18:10 by juloo             #+#    #+#             */
+/*   Updated: 2017/11/07 23:19:40 by juloo            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+body{
+	overflow: hidden;
+	font-family: Arial, sans-serif;
+}
+
+.cont
+{
+	width: 900px;
+	margin: 20px auto 0 auto;
+
+	.curr
+	{
+		display: inline-block;
+		margin: 50px 0 50px 150px;
+
+		.clock
+		{
+			padding: 5px 15px;
+			font-size: 50px;
+			.sep
+			{
+				padding: 0 3px;
+				font-weight: bold;
+				font-size: 30px;
+				vertical-align: middle;
+			}
+		}
+
+		.stats_row
+		{
+			& > *
+			{
+				float: left;
+				margin: 10px;
+			}
+			& > *:last-child { float: right; }
+			&:after
+			{
+				content: " ";
+				display: block;
+				clear: both;
+			}
+		}
+
+	}
+
+	.graph
+	{
+		margin: 20px 0;
+		border-top: 1px solid #e6e6e6;
+		border-bottom: 1px solid #e6e6e6;
+	}
+
+}

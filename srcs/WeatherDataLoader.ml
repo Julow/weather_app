@@ -6,7 +6,7 @@
 (*   By: juloo <juloo@student.42.fr>                +#+  +:+       +#+        *)
 (*                                                +#+#+#+#+#+   +#+           *)
 (*   Created: 2017/06/10 14:03:29 by juloo             #+#    #+#             *)
-(*   Updated: 2017/06/10 18:58:54 by juloo            ###   ########.fr       *)
+(*   Updated: 2017/11/06 22:25:23 by juloo            ###   ########.fr       *)
 (*                                                                            *)
 (* ************************************************************************** *)
 
@@ -17,18 +17,36 @@ let cache_outdated = 15. *. 60. *. 1000.
 
 let api_url = "http://api.wunderground.com/api/b08b95a1341330dd/astronomy/conditions/hourly/bestfct:1/q/48.8566,2.3522.json"
 
+(* Get WeatherData from cache *)
 let get_cached () =
-	Lwt.return (match LocalStorage.get cache_key with
+	match LocalStorage.get cache_key with
 	| Some json		->
-		let date, data = Js._JSON##parse json in
-		if (new%js Js.date_now)##getTime -. date < cache_outdated
-		then Uptodate data
-		else Outdated data
-	| None			-> Nodata)
+		let cached_time, data = Js._JSON##parse json in
+		if (new%js Js.date_now)##getTime -. cached_time < cache_outdated
+			then Uptodate data
+			else Outdated data
+	| None			-> Nodata
 
-let load () =
-	let%lwt r = XmlHttpRequest.(perform_raw Text api_url) in
-	let r = Js._JSON##parse r.XmlHttpRequest.content |> WeatherData.of_object in
+let set_cached data =
 	let now = (new%js Js.date_now)##getTime in
-	Js._JSON##stringify (now, r) |> LocalStorage.set cache_key;
-	Lwt.return r
+	Js._JSON##stringify (now, data)
+	|> LocalStorage.set cache_key
+
+exception RequestFailed of int
+exception InvalidResponse
+
+(* Get WeatherData from wunderground *)
+(* May fail with RequestFailed (http code) or InvalidResponse *)
+let load () =
+	let process content =
+		let data = WeatherData.of_object content in
+		set_cached data;
+		data
+	in
+	let open Lwt_xmlHttpRequest in
+	match%lwt perform_raw XmlHttpRequest.JSON api_url with
+	| { code=200; content; _ }	->
+		Js.Opt.case content
+			(fun () -> Lwt.fail InvalidResponse)
+			(fun data -> Lwt.return (process data))
+	| { code; _ }				-> Lwt.fail (RequestFailed code)
